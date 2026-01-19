@@ -26,6 +26,7 @@ const menuItems = [
   { icon: DollarSign, label: "Empréstimos", path: "/loans" },
   { icon: CreditCard, label: "Pagamentos", path: "/payments" },
   { icon: AlertCircle, label: "Em Atraso", path: "/overdue" },
+  { icon: SettingsIcon, label: "Configurações", path: "/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

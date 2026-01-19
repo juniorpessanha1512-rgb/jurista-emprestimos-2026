@@ -11,6 +11,7 @@ import Loans from "./pages/Loans";
 import LoanDetail from "./pages/LoanDetail";
 import Payments from "./pages/Payments";
 import Overdue from "./pages/Overdue";
+import Settings from "./pages/Settings";
 function Router() {
   return (
     <Switch>
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/loans/:id" component={LoanDetail} />
       <Route path="/payments" component={Payments} />
       <Route path="/overdue" component={Overdue} />
+      <Route path="/settings" component={Settings} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
