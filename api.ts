@@ -2,8 +2,17 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from './server/routers';
 import { createContext } from './server/_core/context';
+import * as simpleAuth from './server/simpleAuth';
+import * as db from './server/db';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Inicializar banco de dados e senha padrão
+  try {
+    await simpleAuth.initializeDefaultPassword();
+  } catch (error) {
+    console.error('[API] Failed to initialize password:', error);
+  }
+
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

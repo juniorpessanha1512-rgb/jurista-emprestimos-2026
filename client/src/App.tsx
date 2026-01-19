@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
@@ -12,18 +13,29 @@ import LoanDetail from "./pages/LoanDetail";
 import Payments from "./pages/Payments";
 import Overdue from "./pages/Overdue";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/clients" component={Clients} />
-      <Route path="/clients/:id" component={ClientDetail} />
-      <Route path="/loans" component={Loans} />
-      <Route path="/loans/:id" component={LoanDetail} />
-      <Route path="/payments" component={Payments} />
-      <Route path="/overdue" component={Overdue} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/404" component={NotFound} />
+      <Route path="/login" component={Login} />
+      <Route path="/" nest>
+        {() => (
+          <ProtectedRoute>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/clients" component={Clients} />
+              <Route path="/clients/:id" component={ClientDetail} />
+              <Route path="/loans" component={Loans} />
+              <Route path="/loans/:id" component={LoanDetail} />
+              <Route path="/payments" component={Payments} />
+              <Route path="/overdue" component={Overdue} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/404" component={NotFound} />
+              <Route component={NotFound} />
+            </Switch>
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
