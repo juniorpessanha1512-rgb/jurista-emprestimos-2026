@@ -94,8 +94,18 @@ export async function createClient(client: InsertClient) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(clients).values(client);
-  return result[0].insertId;
+  try {
+    const result = await db.insert(clients).values(client);
+    // Drizzle retorna um objeto com a propriedade insertId
+    const insertId = (result as any).insertId || (result as any)[0]?.insertId;
+    if (!insertId) {
+      throw new Error("Failed to get insert ID from database response");
+    }
+    return insertId;
+  } catch (error) {
+    console.error("[Database] Failed to create client:", error);
+    throw error;
+  }
 }
 
 export async function getAllClients(userId: number) {
@@ -156,8 +166,17 @@ export async function createLoan(loan: InsertLoan) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(loans).values(loan);
-  return result[0].insertId;
+  try {
+    const result = await db.insert(loans).values(loan);
+    const insertId = (result as any).insertId || (result as any)[0]?.insertId;
+    if (!insertId) {
+      throw new Error("Failed to get insert ID from database response");
+    }
+    return insertId;
+  } catch (error) {
+    console.error("[Database] Failed to create loan:", error);
+    throw error;
+  }
 }
 
 export async function getAllLoans(userId: number) {
@@ -255,8 +274,17 @@ export async function createPayment(payment: InsertPayment) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(payments).values(payment);
-  return result[0].insertId;
+  try {
+    const result = await db.insert(payments).values(payment);
+    const insertId = (result as any).insertId || (result as any)[0]?.insertId;
+    if (!insertId) {
+      throw new Error("Failed to get insert ID from database response");
+    }
+    return insertId;
+  } catch (error) {
+    console.error("[Database] Failed to create payment:", error);
+    throw error;
+  }
 }
 
 export async function getPaymentsByLoanId(loanId: number, userId: number) {
