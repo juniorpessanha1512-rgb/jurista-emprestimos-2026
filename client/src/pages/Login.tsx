@@ -39,7 +39,7 @@ export default function Login() {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
             <Lock className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold">Jurista Empréstimos</CardTitle>
+          <CardTitle className="text-3xl font-bold">Empréstimos BM 2026</CardTitle>
           <CardDescription className="text-base">
             Digite sua senha para acessar o sistema
           </CardDescription>

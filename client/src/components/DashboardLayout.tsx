@@ -174,10 +174,10 @@ function DashboardLayoutContent({
               </Avatar>
               <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                 <p className="text-sm font-medium truncate leading-none">
-                  Jurista
+                  Empréstimos BM 2026
                 </p>
                 <p className="text-xs text-muted-foreground truncate mt-1.5">
-                  Sistema de Empréstimos
+                  Sistema de Gestão
                 </p>
               </div>
             </div>
