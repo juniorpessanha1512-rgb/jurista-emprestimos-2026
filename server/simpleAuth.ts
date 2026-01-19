@@ -47,9 +47,13 @@ export async function initializeDefaultPassword(): Promise<void> {
  */
 export async function verifyPassword(password: string): Promise<boolean> {
   const db = await getDb();
+  
+  // Se o banco não está disponível, usar fallback com a senha padrão
   if (!db) {
-    console.warn("[SimpleAuth] Cannot verify password: database not available");
-    return false;
+    console.warn("[SimpleAuth] Database not available, using fallback authentication");
+    const isValid = password === DEFAULT_PASSWORD;
+    console.log(`[SimpleAuth] Fallback auth result: ${isValid}`);
+    return isValid;
   }
 
   try {
@@ -67,10 +71,14 @@ export async function verifyPassword(password: string): Promise<boolean> {
 
     const storedHash = result[0].value;
     const inputHash = hashPassword(password);
-    return storedHash === inputHash;
+    const isValid = storedHash === inputHash;
+    console.log(`[SimpleAuth] Password verification result: ${isValid}`);
+    return isValid;
   } catch (error) {
     console.error("[SimpleAuth] Failed to verify password:", error);
-    return false;
+    // Fallback para senha padrão se houver erro
+    console.log("[SimpleAuth] Using fallback due to error");
+    return password === DEFAULT_PASSWORD;
   }
 }
 

@@ -24,10 +24,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Convert Vercel request to Fetch API Request
   const url = `https://${req.headers.host}${req.url}`;
+  let body: BodyInit | undefined;
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (typeof req.body === 'string') {
+      body = req.body;
+    } else if (req.body) {
+      body = JSON.stringify(req.body);
+    }
+  }
   const fetchRequest = new Request(url, {
     method: req.method,
     headers: req.headers as HeadersInit,
-    body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+    body,
   });
 
   // Handle tRPC request
