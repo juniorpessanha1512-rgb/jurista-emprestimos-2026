@@ -3,10 +3,16 @@
   "buildCommand": "cd client && pnpm install && pnpm run build",
   "outputDirectory": "dist/public",
   "framework": null,
+  "functions": {
+    "api/trpc.ts": {
+      "memory": 3008,
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api"
+      "source": "/api/trpc/:path*",
+      "destination": "/api/trpc.ts"
     },
     {
       "source": "/(.*)",
