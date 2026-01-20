@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+import { neon } from '@neondatabase/serverless';
 
 // Configuração do Banco de Dados
 const sql = neon(process.env.DATABASE_URL);
@@ -6,7 +6,7 @@ const sql = neon(process.env.DATABASE_URL);
 // Senha de acesso
 const ADMIN_PASSWORD = "151612";
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -53,4 +53,4 @@ module.exports = async (req, res) => {
     console.error('API Error:', error);
     return res.status(500).json({ error: 'Erro interno no servidor', details: error.message });
   }
-};
+}
