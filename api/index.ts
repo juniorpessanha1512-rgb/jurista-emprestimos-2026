@@ -1,78 +1,85 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { appRouter } from '../server/routers';
-import { createContext } from '../server/_core/context';
+
+// Senha padrão
+const ADMIN_PASSWORD = "151612";
+
+// Armazenar sessões em memória (em produção usar Redis)
+const sessions = new Map<string, { createdAt: number }>();
+
+function generateSessionToken(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+function isValidSession(token: string | undefined): boolean {
+  if (!token) return false;
+  const session = sessions.get(token);
+  if (!session) return false;
+  // Sessão válida por 30 dias
+  const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+  return Date.now() - session.createdAt < thirtyDaysInMs;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    console.log('[API] Incoming request:', {
-      method: req.method,
-      url: req.url,
-      timestamp: new Date().toISOString()
-    });
+    const path = req.url?.split('?')[0] || '';
+    console.log(`[API] ${req.method} ${path}`);
 
-    // Handle CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
+    // Health check
+    if (path === '/api/health') {
+      return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
     }
 
-    // Convert Vercel request to Fetch API Request
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
-    const url = `${protocol}://${host}${req.url}`;
-    
-    console.log('[API] Request URL:', url);
-    
-    let body: BodyInit | undefined;
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      if (typeof req.body === 'string') {
-        body = req.body;
-      } else if (req.body) {
-        body = JSON.stringify(req.body);
+    // Login endpoint
+    if (path === '/api/auth/login' && req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const password = body.password || body.json?.password;
+
+      if (password === ADMIN_PASSWORD) {
+        const sessionToken = generateSessionToken();
+        sessions.set(sessionToken, { createdAt: Date.now() });
+        
+        res.setHeader('Set-Cookie', `simple_auth_session=${sessionToken}; Path=/; Max-Age=${30 * 24 * 60 * 60}; HttpOnly; SameSite=Lax`);
+        return res.status(200).json({ success: true });
       }
+
+      return res.status(401).json({ error: 'Senha incorreta' });
     }
-    
-    const fetchRequest = new Request(url, {
-      method: req.method,
-      headers: req.headers as HeadersInit,
-      body,
-    });
 
-    console.log('[API] Calling tRPC handler');
+    // Check auth endpoint
+    if (path === '/api/auth/check' && req.method === 'GET') {
+      const cookies = req.headers.cookie || '';
+      const sessionMatch = cookies.match(/simple_auth_session=([^;]+)/);
+      const token = sessionMatch ? sessionMatch[1] : undefined;
+      const authenticated = isValidSession(token);
 
-    // Handle tRPC request
-    const response = await fetchRequestHandler({
-      endpoint: '/api',
-      req: fetchRequest,
-      router: appRouter,
-      createContext: () => createContext({ req: req as any, res: res as any }),
-    });
+      return res.status(200).json({ authenticated });
+    }
 
-    console.log('[API] tRPC response status:', response.status);
+    // Logout endpoint
+    if (path === '/api/auth/logout' && req.method === 'POST') {
+      res.setHeader('Set-Cookie', 'simple_auth_session=; Path=/; Max-Age=0; HttpOnly');
+      return res.status(200).json({ success: true });
+    }
 
-    // Convert Fetch API Response to Vercel response
-    const responseBody = await response.text();
-    res.status(response.status);
-    response.headers.forEach((value, key) => {
-      res.setHeader(key, value);
-    });
-    res.send(responseBody);
+    // 404
+    return res.status(404).json({ error: 'Endpoint not found' });
+
   } catch (error) {
-    console.error('[API] Handler error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : '';
-    console.error('[API] Error stack:', errorStack);
-    
-    res.status(500).json({
+    console.error('[API] Error:', error);
+    return res.status(500).json({
       error: 'Internal server error',
-      message: errorMessage,
-      stack: process.env.NODE_ENV === 'development' ? errorStack : undefined
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
