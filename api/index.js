@@ -1,8 +1,3 @@
-import { neon } from '@neondatabase/serverless';
-
-// Configuração do Banco de Dados
-const sql = neon(process.env.DATABASE_URL);
-
 // Senha de acesso
 const ADMIN_PASSWORD = "151612";
 
@@ -20,8 +15,16 @@ export default async function handler(req, res) {
   try {
     // 1. Endpoint de Login
     if (req.method === 'POST' && url.includes('/api/auth/login')) {
-      const body = req.body;
-      const password = body.password || (body.json && body.json.password);
+      let body = req.body;
+      
+      // No Vercel, o body pode vir como string ou objeto
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {}
+      }
+      
+      const password = body?.password || body?.json?.password;
       
       if (password === ADMIN_PASSWORD) {
         res.setHeader('Set-Cookie', 'simple_auth_session=true; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax');
@@ -36,16 +39,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ authenticated: cookies.includes('simple_auth_session=true') });
     }
 
-    // 3. Endpoint de Teste de Banco de Dados
-    if (req.method === 'GET' && url.includes('/api/db-test')) {
-      const result = await sql`SELECT NOW() as now`;
-      return res.status(200).json({ success: true, db_time: result[0].now });
-    }
-
-    // 4. Listar Clientes (Exemplo de uso do banco)
-    if (req.method === 'GET' && url.includes('/api/clients')) {
-      const clients = await sql`SELECT * FROM clients LIMIT 10`;
-      return res.status(200).json(clients);
+    // 3. Endpoint de Teste Simples
+    if (req.method === 'GET' && url.includes('/api/health')) {
+      return res.status(200).json({ status: 'ok', time: new Date().toISOString() });
     }
 
     return res.status(404).json({ error: 'Endpoint não encontrado: ' + url });
