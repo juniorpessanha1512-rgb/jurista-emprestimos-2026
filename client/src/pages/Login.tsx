@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { trpc } from "@/lib/trpc";
 import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -11,25 +10,41 @@ import { useLocation } from "wouter";
 export default function Login() {
   const [, navigate] = useLocation();
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
-      toast.success("Login realizado com sucesso!");
-      navigate("/");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Senha incorreta");
-      setPassword("");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password) {
       toast.error("Digite a senha");
       return;
     }
-    loginMutation.mutate({ password });
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        toast.success("Login realizado com sucesso!");
+        navigate("/");
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Senha incorreta");
+        setPassword("");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Erro ao fazer login. Tente novamente.");
+      setPassword("");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,7 +70,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
-                disabled={loginMutation.isPending}
+                disabled={isLoading}
               />
             </div>
 
@@ -63,9 +78,9 @@ export default function Login() {
               type="submit"
               className="w-full"
               size="lg"
-              disabled={loginMutation.isPending}
+              disabled={isLoading}
             >
-              {loginMutation.isPending ? "Entrando..." : "Entrar"}
+              {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
 
