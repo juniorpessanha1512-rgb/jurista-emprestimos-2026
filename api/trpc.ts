@@ -2,28 +2,20 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 import { appRouter } from '../server/routers';
 import { createContext } from '../server/_core/context';
-import * as simpleAuth from '../server/simpleAuth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     console.log('[API] Incoming request:', {
       method: req.method,
       url: req.url,
-      headers: Object.keys(req.headers)
+      timestamp: new Date().toISOString()
     });
-
-    // Inicializar banco de dados e senha padrão
-    try {
-      await simpleAuth.initializeDefaultPassword();
-      console.log('[API] Password initialized');
-    } catch (error) {
-      console.error('[API] Failed to initialize password:', error);
-    }
 
     // Handle CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
       res.status(200).end();

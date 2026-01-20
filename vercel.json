@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "cd client && pnpm install && pnpm run build",
-  "outputDirectory": "dist/public",
+  "outputDirectory": "client/dist",
   "framework": null,
   "functions": {
     "api/**/*.ts": {
