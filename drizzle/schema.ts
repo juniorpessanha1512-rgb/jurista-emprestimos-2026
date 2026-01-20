@@ -1,17 +1,23 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
+import { integer, pgEnum, pgTable, text, timestamp, varchar, numeric } from "drizzle-orm/pg-core";
+
+// Define enums
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const interestPeriodEnum = pgEnum("interestPeriod", ["weekly", "biweekly", "monthly"]);
+export const loanStatusEnum = pgEnum("status", ["active", "paid", "overdue", "cancelled"]);
+export const paymentTypeEnum = pgEnum("paymentType", ["principal", "interest", "both"]);
 
 /**
  * Core user table backing auth flow.
  */
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+export const users = pgTable("users", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: roleEnum("role").notNull().default("user"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
@@ -21,16 +27,16 @@ export type InsertUser = typeof users.$inferInsert;
 /**
  * Clientes que recebem empréstimos
  */
-export const clients = mysqlTable("clients", {
-  id: int("id").autoincrement().primaryKey(),
+export const clients = pgTable("clients", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: varchar("name", { length: 255 }).notNull(),
   cpf: varchar("cpf", { length: 14 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  createdBy: int("createdBy").notNull().references(() => users.id),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  createdBy: integer("createdBy").notNull().references(() => users.id),
 });
 
 export type Client = typeof clients.$inferSelect;
@@ -39,19 +45,19 @@ export type InsertClient = typeof clients.$inferInsert;
 /**
  * Empréstimos realizados para clientes
  */
-export const loans = mysqlTable("loans", {
-  id: int("id").autoincrement().primaryKey(),
-  clientId: int("clientId").notNull().references(() => clients.id, { onDelete: "cascade" }),
-  principalAmount: decimal("principalAmount", { precision: 15, scale: 2 }).notNull(),
-  interestRate: decimal("interestRate", { precision: 5, scale: 2 }).notNull(), // Taxa de juros em porcentagem
-  interestPeriod: mysqlEnum("interestPeriod", ["weekly", "biweekly", "monthly"]).notNull(),
+export const loans = pgTable("loans", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  principalAmount: numeric("principalAmount", { precision: 15, scale: 2 }).notNull(),
+  interestRate: numeric("interestRate", { precision: 5, scale: 2 }).notNull(), // Taxa de juros em porcentagem
+  interestPeriod: interestPeriodEnum("interestPeriod").notNull(),
   startDate: timestamp("startDate").notNull(),
   dueDate: timestamp("dueDate").notNull(),
-  status: mysqlEnum("status", ["active", "paid", "overdue", "cancelled"]).default("active").notNull(),
+  status: loanStatusEnum("status").notNull().default("active"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  createdBy: int("createdBy").notNull().references(() => users.id),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  createdBy: integer("createdBy").notNull().references(() => users.id),
 });
 
 export type Loan = typeof loans.$inferSelect;
@@ -60,15 +66,15 @@ export type InsertLoan = typeof loans.$inferInsert;
 /**
  * Pagamentos realizados para empréstimos
  */
-export const payments = mysqlTable("payments", {
-  id: int("id").autoincrement().primaryKey(),
-  loanId: int("loanId").notNull().references(() => loans.id, { onDelete: "cascade" }),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+export const payments = pgTable("payments", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  loanId: integer("loanId").notNull().references(() => loans.id, { onDelete: "cascade" }),
+  amount: numeric("amount", { precision: 15, scale: 2 }).notNull(),
   paymentDate: timestamp("paymentDate").notNull(),
-  paymentType: mysqlEnum("paymentType", ["principal", "interest", "both"]).notNull(),
+  paymentType: paymentTypeEnum("paymentType").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  createdBy: int("createdBy").notNull().references(() => users.id),
+  createdBy: integer("createdBy").notNull().references(() => users.id),
 });
 
 export type Payment = typeof payments.$inferSelect;
@@ -77,11 +83,11 @@ export type InsertPayment = typeof payments.$inferInsert;
 /**
  * Configurações do sistema (senha de acesso)
  */
-export const settings = mysqlTable("settings", {
-  id: int("id").autoincrement().primaryKey(),
+export const settings = pgTable("settings", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   key: varchar("key", { length: 50 }).notNull().unique(),
   value: text("value").notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Setting = typeof settings.$inferSelect;
