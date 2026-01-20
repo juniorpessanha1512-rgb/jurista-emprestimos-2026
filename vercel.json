@@ -2,25 +2,14 @@
   "version": 2,
   "buildCommand": "cd client && pnpm install && pnpm run build",
   "outputDirectory": "client/dist",
-  "framework": null,
-  "functions": {
-    "api/**/*.ts": {
-      "memory": 3008,
-      "maxDuration": 60,
-      "runtime": "nodejs20.x"
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/trpc/:path*",
-      "destination": "/api/trpc"
+      "source": "/api/auth/:path*",
+      "destination": "/api/auth.js"
     },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
