@@ -32,7 +32,11 @@ export default function Login() {
 
       if (response.ok) {
         toast.success("Login realizado com sucesso!");
-        navigate("/");
+        // Pequeno delay para garantir que o cookie seja processado
+        setTimeout(() => {
+          navigate("/");
+          window.location.reload(); // Força recarregamento para atualizar estado global
+        }, 500);
       } else {
         const data = await response.json();
         toast.error(data.error || "Senha incorreta");

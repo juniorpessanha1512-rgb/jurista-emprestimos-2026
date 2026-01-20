@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
 import Login from "@/pages/Login";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -12,20 +11,20 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const cookies = document.cookie;
-        const hasSession = cookies.includes("simple_auth_session=");
+        const response = await fetch("/api/auth/check", {
+          credentials: "include",
+        });
         
-        if (!hasSession) {
+        if (response.ok) {
+          const data = await response.json();
+          setIsAuthenticated(!!data.authenticated);
+        } else {
           setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
         }
-
-        setIsAuthenticated(true);
-        setIsLoading(false);
       } catch (error) {
         console.error("Error checking auth:", error);
         setIsAuthenticated(false);
+      } finally {
         setIsLoading(false);
       }
     };
