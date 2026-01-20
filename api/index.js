@@ -1,25 +1,22 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 // Senha padrão
 const ADMIN_PASSWORD = "151612";
 
-// Armazenar sessões em memória (em produção usar Redis)
-const sessions = new Map<string, { createdAt: number }>();
+// Armazenar sessões em memória
+const sessions = new Map();
 
-function generateSessionToken(): string {
+function generateSessionToken() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-function isValidSession(token: string | undefined): boolean {
+function isValidSession(token) {
   if (!token) return false;
   const session = sessions.get(token);
   if (!session) return false;
-  // Sessão válida por 30 dias
   const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
   return Date.now() - session.createdAt < thirtyDaysInMs;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
@@ -82,4 +79,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-}
+};
