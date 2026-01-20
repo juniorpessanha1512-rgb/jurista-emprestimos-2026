@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Handle tRPC request
     const response = await fetchRequestHandler({
-      endpoint: '/api/trpc',
+      endpoint: '/api',
       req: fetchRequest,
       router: appRouter,
       createContext: () => createContext({ req: req as any, res: res as any }),
