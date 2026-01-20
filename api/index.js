@@ -1,3 +1,8 @@
+import { neon } from '@neondatabase/serverless';
+
+// Configuração do Banco de Dados
+const sql = neon(process.env.DATABASE_URL);
+
 // Senha de acesso
 const ADMIN_PASSWORD = "151612";
 
@@ -39,7 +44,19 @@ export default async function handler(req, res) {
       return res.status(200).json({ authenticated: cookies.includes('simple_auth_session=true') });
     }
 
-    // 3. Endpoint de Teste Simples
+    // 3. Endpoint de Teste de Banco de Dados
+    if (req.method === 'GET' && url.includes('/api/db-test')) {
+      const result = await sql`SELECT NOW() as now`;
+      return res.status(200).json({ success: true, db_time: result[0].now });
+    }
+
+    // 4. Listar Clientes (Exemplo de uso do banco)
+    if (req.method === 'GET' && url.includes('/api/clients')) {
+      const clients = await sql`SELECT * FROM clients LIMIT 10`;
+      return res.status(200).json(clients);
+    }
+
+    // 5. Endpoint de Health Check
     if (req.method === 'GET' && url.includes('/api/health')) {
       return res.status(200).json({ status: 'ok', time: new Date().toISOString() });
     }
